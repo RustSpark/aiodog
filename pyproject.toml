@@ -4,7 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["渐之 <542884552@qq.com>"]
 readme = "README.md"
-packages = [{ include = "pydog" }]
+packages = [
+    { include = "pydog" },
+    { include = "examples" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -15,6 +18,10 @@ parsel = "^1.8.1"
 loguru = "^0.7.2"
 aiohttp = "^3.8.6"
 pyee = "^11.0.1"
+playwright = "^1.39.0"
+
+[tool.poetry.scripts]
+simple_demo = "examples.simple_demo:main"
 
 [[tool.poetry.source]]
 name = "tsh"
