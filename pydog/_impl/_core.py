@@ -10,7 +10,11 @@ from ._request import Request
 
 
 class Control:
-    def __init__(self, task_name: str, task_limit: int = 5):
+    def __init__(
+        self,
+        task_name: str,
+        task_limit: int = 5,
+    ):
         self._tn = task_name
         self._tl = task_limit
 
@@ -39,8 +43,7 @@ class Control:
         return wrapper
 
     async def _recursive(self, request: Request):
-        await asyncio.sleep(1)
-        print(request)
+        await request.get_response()
 
     def __call__(self, function):
         @wraps(function)
