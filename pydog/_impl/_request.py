@@ -1,26 +1,25 @@
 import asyncio
 import inspect
 import traceback
-from typing import Callable, Tuple, Dict, Any
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from aiohttp import ClientSession
-
-from ._response import Response
+from loguru import logger
 
 
 class Request:
     def __init__(
         self,
-        function: Callable = None,
-        function_args: Tuple = None,
-        function_kwargs: Dict[str, Any] = None,
-        callback: Callable = None,
-        message: str = None,
+        function: Optional[Callable] = None,
+        function_args: Optional[Tuple] = None,
+        function_kwargs: Optional[Dict[str, Any]] = None,
+        callback: Optional[Callable] = None,
+        message: Optional[str] = None,
         transform: Any = None,
     ):
         self._func = function
-        self._func_args = function_args or tuple()
-        self._func_kwargs = function_kwargs or dict()
+        self._func_args = function_args or ()
+        self._func_kwargs = function_kwargs or {}
         self._callback = callback
         self._msg = message
         self._trans = transform
@@ -38,6 +37,8 @@ class Request:
         return self._trans
 
     async def get_response(self):
+        if not self._func:
+            return
         try:
             function = self._func
             if inspect.ismethod(self._func):
@@ -45,16 +46,15 @@ class Request:
                 if isinstance(
                     instance := getattr(self._func, "__self__"), ClientSession
                 ):
-                    return
-                    # async with self._func(*self._func_args, **self._func_kwargs) as res:
-                    #     pass
+                    async with self._func(*self._func_args, **self._func_kwargs) as res:
+                        return res
             if inspect.iscoroutinefunction(function):
-                await self._func(*self._func_args, **self._func_kwargs)
+                return await self._func(*self._func_args, **self._func_kwargs)
             elif inspect.isasyncgenfunction(function):
-                self._func(*self._func_args, **self._func_kwargs)
+                return self._func(*self._func_args, **self._func_kwargs)
             else:
-                await asyncio.to_thread(
+                return await asyncio.to_thread(
                     self._func, *self._func_args, **self._func_kwargs
                 )
         except Exception:
-            traceback.print_exc()
+            logger.error(traceback.format_exc())

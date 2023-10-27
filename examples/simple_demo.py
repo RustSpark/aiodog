@@ -1,9 +1,9 @@
 import asyncio
-import time
 
 from aiohttp import ClientSession
+from loguru import logger
 
-from pydog import Control, Parser, Request
+from pydog import Control, Parser, Request, Item
 
 
 def main():
@@ -31,14 +31,17 @@ def main():
                 await asyncio.sleep(1)
 
             async def parser2(a):
-                for i in range(2):
+                for i in range(1):
                     yield Request(
                         function=session.get,
-                        callback=parser2_callback
+                        # function_args=("https://baidu.co",),
+                        function_args=("http://www.winfield.demon.nl/",),
+                        callback=parser2_callback,
                     )
 
             async def parser2_callback(request, response):
-                print(request, response)
+                logger.info(response)
+                yield Item()
 
             async def parser3(b):
                 for i in range(2):
