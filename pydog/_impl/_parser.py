@@ -13,8 +13,8 @@ class Parser:
             if inspect.isawaitable(result := self._func(*self._args)):
                 await result
             elif inspect.isasyncgen(result):
-                async for request in result:
-                    yield request
+                async for request_or_item in result:
+                    yield request_or_item
             if inspect.isawaitable(trans := function(*args)):
                 await trans
             elif inspect.isasyncgen(trans):

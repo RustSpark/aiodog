@@ -34,7 +34,11 @@ def main():
                 for i in range(2):
                     yield Request(
                         function=session.get,
+                        callback=parser2_callback
                     )
+
+            async def parser2_callback(request, response):
+                print(request, response)
 
             async def parser3(b):
                 for i in range(2):

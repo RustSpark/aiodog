@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import traceback
 from typing import Callable, Tuple, Dict, Any
 
 from aiohttp import ClientSession
@@ -24,17 +25,36 @@ class Request:
         self._msg = message
         self._trans = transform
 
+    @property
+    def callback(self):
+        return self._callback
+
+    @property
+    def msg(self):
+        return self._msg
+
+    @property
+    def trans(self):
+        return self._trans
+
     async def get_response(self):
-        function = self._func
-        if inspect.ismethod(self._func):
-            function = getattr(self._func, "__func__")
-            if isinstance(instance := getattr(self._func, "__self__"), ClientSession):
-                return
-                # async with self._func(*self._func_args, **self._func_kwargs) as res:
-                #     pass
-        if inspect.iscoroutinefunction(function):
-            await self._func(*self._func_args, **self._func_kwargs)
-        elif inspect.isasyncgenfunction(function):
-            self._func(*self._func_args, **self._func_kwargs)
-        else:
-            await asyncio.to_thread(self._func, *self._func_args, **self._func_kwargs)
+        try:
+            function = self._func
+            if inspect.ismethod(self._func):
+                function = getattr(self._func, "__func__")
+                if isinstance(
+                    instance := getattr(self._func, "__self__"), ClientSession
+                ):
+                    return
+                    # async with self._func(*self._func_args, **self._func_kwargs) as res:
+                    #     pass
+            if inspect.iscoroutinefunction(function):
+                await self._func(*self._func_args, **self._func_kwargs)
+            elif inspect.isasyncgenfunction(function):
+                self._func(*self._func_args, **self._func_kwargs)
+            else:
+                await asyncio.to_thread(
+                    self._func, *self._func_args, **self._func_kwargs
+                )
+        except Exception:
+            traceback.print_exc()

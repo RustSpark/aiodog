@@ -1,2 +1,2 @@
-# pyDog
-python asynchronous framework (crawler, mysql, sync task -> async task)
+# pyDog简介
+Python是异步执行框架（爬虫、数据跑数、实用工具。。。）
