@@ -4,7 +4,7 @@ import random
 import traceback
 from asyncio import Queue
 from functools import wraps
-from typing import Union, Tuple, Optional, List, AsyncIterator, AsyncIterable, TypeVar
+from typing import Union, Tuple, Optional, List, AsyncIterator, AsyncIterable
 
 from aiostream import operator, pipe, pipable_operator, streamcontext, stream, core
 from loguru import logger
@@ -12,15 +12,14 @@ from loguru import logger
 from ._request import Request
 from ._item import Item
 
-Message = str
-
 
 @pipable_operator
 def _logger(source: AsyncIterable) -> AsyncIterator:
-    def func(value) -> None:
-        logger.info(value)
+    def message(value) -> None:
+        if type(value) == str:
+            logger.info(value)
 
-    return stream.action.raw(source, func)
+    return stream.action.raw(source, message)
 
 
 class Control:
@@ -50,8 +49,8 @@ class Control:
 
         return wrapper
 
-    async def _assign_items_pipeline(self, items: List[Item]) -> Optional[Message]:
-        pass
+    async def _assign_items_pipeline(self, items: List[Item]) -> Optional[str]:
+        return ""
 
     async def _async_generate_items(self):
         @pipable_operator
@@ -103,7 +102,7 @@ class Control:
 
     def __call__(self, function):
         @wraps(function)
-        async def wrapper(*args):
+        async def execute(*args):
             logger.info(f"Start execute task `{self._tn}`")
             task = None
             try:
@@ -119,4 +118,4 @@ class Control:
                 if task:
                     await task
 
-        return wrapper
+        return execute

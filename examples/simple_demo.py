@@ -3,7 +3,7 @@ import asyncio
 from aiohttp import ClientSession
 from loguru import logger
 
-from pydog import Control, Parser, Request, Item
+from pydog import Control, Parser, Request
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
                 await asyncio.sleep(1)
 
             async def parser2(a):
-                for i in range(1):
+                for i in range(2):
                     yield Request(
                         function=session.get,
                         # function_args=("https://baidu.co",),
@@ -41,7 +41,6 @@ def main():
 
             async def parser2_callback(request, response):
                 logger.info(response)
-                yield Item()
 
             async def parser3(b):
                 for i in range(2):
@@ -49,7 +48,7 @@ def main():
                         function=request_function,
                     )
 
-            @Control(task_name="simple demo")
+            @Control(task_name="simple demo", item_save_step_number=1)
             @Parser(parser2, 1)
             @Parser(parser3, 2)
             async def run(c):

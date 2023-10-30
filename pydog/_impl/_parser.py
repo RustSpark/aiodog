@@ -1,9 +1,10 @@
 import inspect
 from functools import wraps
+from typing import Callable
 
 
 class Parser:
-    def __init__(self, callback, *args):
+    def __init__(self, callback: Callable, *args):
         self._func = callback
         self._args = args
 
