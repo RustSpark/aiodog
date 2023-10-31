@@ -19,6 +19,9 @@ loguru = "^0.7.2"
 aiohttp = "^3.8.6"
 pyee = "^11.0.1"
 playwright = "^1.39.0"
+sqlalchemy = "^2.0.22"
+fastapi = "^0.104.1"
+pydantic-settings = "^2.0.3"
 
 [tool.poetry.scripts]
 simple_demo = "examples.simple_demo:main"

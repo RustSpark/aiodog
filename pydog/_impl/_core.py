@@ -3,10 +3,19 @@ import inspect
 import random
 import traceback
 from asyncio import Queue
-from functools import wraps
+from collections import defaultdict
+from functools import wraps, partial
 from typing import Union, Tuple, Optional, List, AsyncIterator, AsyncIterable
 
-from aiostream import operator, pipe, pipable_operator, streamcontext, stream, core
+from aiostream import (
+    operator,
+    pipe,
+    pipable_operator,
+    streamcontext,
+    stream,
+    core,
+    async_,
+)
 from loguru import logger
 
 from ._request import Request
@@ -28,7 +37,7 @@ class Control:
         task_name: str,
         task_limit: int = 5,
         task_sleep_time: Optional[Union[Tuple, int]] = None,
-        pipeline_limit: int = 1,
+        pipeline_limit: int = 5,
         item_queue_maxsize: int = 1000,
         item_save_step_number: int = 5000,
     ):
@@ -44,13 +53,20 @@ class Control:
         @pipable_operator
         def wrapper(source):
             return (
-                source | _logger.pipe() | pipe.map(self._recursive, task_limit=self._tl)
+                source | _logger.pipe() | pipe.map(self._recursive, task_limit=self._tl)  # type: ignore
             )
 
         return wrapper
 
-    async def _assign_items_pipeline(self, items: List[Item]) -> Optional[str]:
-        return ""
+    def _assign_items(self, items: List[Item]):
+        _cache = defaultdict(partial(defaultdict, partial(defaultdict, list)))
+        for item in items:
+            (_temp := _cache[item.manager][item.model_cls])["data"].append(item.data)
+            _temp["update_cols"] = item.update_cols
+        for m, mv in _cache.items():
+            if hasattr(m, "add_batch"):
+                for t, tv in mv.items():
+                    yield partial(getattr(m, "add_batch"), t, tv)
 
     async def _async_generate_items(self):
         @pipable_operator
@@ -69,14 +85,19 @@ class Control:
                 if self._sentinel is items[-1]:
                     items.pop()
                     if items:
-                        yield items
+                        for source in self._assign_items(items):
+                            yield source
                     break
-                yield items
+                for source in self._assign_items(items):
+                    yield source
 
         try:
             await (
                 runner()
-                | pipe.map(self._assign_items_pipeline, task_limit=self._pl)
+                | pipe.map(
+                    async_(lambda source: source()),  # type: ignore
+                    task_limit=self._pl,
+                )
                 | _logger.pipe()
             )
         except core.StreamEmpty:
