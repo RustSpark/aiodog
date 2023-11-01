@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer
 
-from pydog import Base
+from aiodog import Base
 
 
 class T1(Base):

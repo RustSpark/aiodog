@@ -4,7 +4,7 @@ from loguru import logger
 from sqlalchemy import select
 
 from examples.model import T1
-from pydog import MysqlPipeline, Control, Request, Item
+from aiodog import MysqlPipeline, Control, Request, Item
 
 
 def main():

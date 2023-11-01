@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "pydog"
+name = "aiodog"
 version = "0.1.0"
 description = ""
 authors = ["渐之 <542884552@qq.com>"]
 readme = "README.md"
 packages = [
-    { include = "pydog" },
+    { include = "aiodog" },
     { include = "examples" }
 ]
 

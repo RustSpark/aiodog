@@ -1,7 +1,7 @@
 import asyncio
 from examples.model import T1
 from sqlalchemy import select, func, between
-from pydog import MysqlPipeline, Request, Control, settings
+from aiodog import MysqlPipeline, Request, Control, settings
 from loguru import logger
 
 
