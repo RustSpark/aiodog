@@ -1,10 +1,13 @@
 import asyncio
 import inspect
+import random
 import traceback
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 from aiohttp import ClientSession
 from loguru import logger
+
+from ..config import settings
 
 
 class Request:
@@ -36,25 +39,45 @@ class Request:
     def trans(self):
         return self._trans
 
-    async def get_response(self):
-        if not self._func:
+
+class RequestBuffer:
+    def __init__(
+        self,
+        sleep_time: Optional[Union[int, Tuple]] = None,
+    ):
+        self._st = sleep_time
+
+    async def start(self, request: Request) -> Optional[Tuple[Request, Any]]:
+        if not request._func:
             return
         try:
-            function = self._func
-            if inspect.ismethod(self._func):
-                function = getattr(self._func, "__func__")
+            function = request._func
+            if inspect.ismethod(request._func):
+                function = getattr(request._func, "__func__")
                 if isinstance(
-                    instance := getattr(self._func, "__self__"), ClientSession
+                    instance := getattr(request._func, "__self__"), ClientSession
                 ):
-                    async with self._func(*self._func_args, **self._func_kwargs) as res:
-                        return res
+                    async with request._func(
+                        *request._func_args, **request._func_kwargs
+                    ) as res:
+                        return request, res
             if inspect.iscoroutinefunction(function):
-                return await self._func(*self._func_args, **self._func_kwargs)
+                return request, await request._func(
+                    *request._func_args, **request._func_kwargs
+                )
             elif inspect.isasyncgenfunction(function):
-                return self._func(*self._func_args, **self._func_kwargs)
+                return request, request._func(
+                    *request._func_args, **request._func_kwargs
+                )
             else:
-                return await asyncio.to_thread(
-                    self._func, *self._func_args, **self._func_kwargs
+                return request, await asyncio.to_thread(
+                    request._func, *request._func_args, **request._func_kwargs
                 )
         except Exception:
             logger.error(traceback.format_exc())
+        finally:
+            match self._st:
+                case (a, b, *_):
+                    await asyncio.sleep(random.uniform(a, b))
+                case (a,) | a if isinstance(a, int):
+                    await asyncio.sleep(a)

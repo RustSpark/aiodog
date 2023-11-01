@@ -25,6 +25,7 @@ pydantic-settings = "^2.0.3"
 
 [tool.poetry.scripts]
 simple_demo = "examples.simple_demo:main"
+sqlalchemy_demo = "examples.sqlalchemy_demo:main"
 
 [[tool.poetry.source]]
 name = "tsh"

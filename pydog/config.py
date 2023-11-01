@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # sqlalchemy
     engine_echo: bool = False
 
     class Config:
@@ -12,5 +13,8 @@ class Settings(BaseSettings):
 
 
 @lru_cache
-def get_settings():
+def _get_settings():
     return Settings()
+
+
+settings = _get_settings()

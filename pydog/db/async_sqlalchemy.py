@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 
-from ..config import get_settings
+from ..config import settings
 
 
 Base = declarative_base()
@@ -22,7 +22,7 @@ class Pipeline:
     def __init__(self, name: str) -> None:
         try:
             self._engine: AsyncEngine = create_async_engine(
-                getattr(settings := get_settings(), name, ""),
+                getattr(settings, name, ""),
                 echo=settings.engine_echo,
             )
         except Exception:
@@ -61,4 +61,3 @@ class Pipeline:
         async with self.get_session() as session:
             async with session.begin():
                 await session.execute(statement, **kwargs)
-            await session.commit()

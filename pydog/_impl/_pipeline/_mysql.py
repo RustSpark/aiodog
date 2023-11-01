@@ -1,5 +1,4 @@
 from sqlalchemy.dialects.mysql import insert
-from loguru import logger
 
 from ...db.async_sqlalchemy import Pipeline
 
@@ -9,7 +8,16 @@ class MysqlPipeline(Pipeline):
         super().__init__(name)
 
     async def add_batch(self, table, table_value) -> str:
-        sql = insert(table).values(table_value)
-        logger.info(sql)
-        await self.transaction(sql)
-        return ""
+        stmt = insert(table).values(data := table_value["data"])
+        update_cols = table_value["update_cols"] or data[0].keys()
+        upsert_stmt = stmt.on_duplicate_key_update(
+            {
+                **{
+                    name: inserted
+                    for inserted in stmt.inserted
+                    if (name := inserted.name) in update_cols
+                }
+            }
+        )
+        await self.transaction(upsert_stmt)
+        return f"`Table:{table.__tablename__}` Upsert Success!"
