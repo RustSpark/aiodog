@@ -51,11 +51,11 @@ class Pipeline:
 
     async def find_one(self, statement, **kwargs):
         async with self.get_session() as session:
-            return (await session.execute(statement, **kwargs)).scalar_one_or_none()
+            return (await session.execute(statement, **kwargs)).first()
 
     async def find_all(self, statement, **kwargs):
         async with self.get_session() as session:
-            return (await session.execute(statement, **kwargs)).scalars().all()
+            return (await session.execute(statement, **kwargs)).all()
 
     async def transaction(self, statement, **kwargs):
         async with self.get_session() as session:

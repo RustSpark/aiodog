@@ -121,7 +121,7 @@ class ItemBuffer:
                 | pipe.map(async_(lambda callback: callback()), task_limit=self._pl)
             )
         except core.StreamEmpty:
-            logger.error("No Items Exists!")
+            logger.warning("No Items Exists!")
 
     async def __aenter__(self):
         self._task = asyncio.create_task(self._generate_items())

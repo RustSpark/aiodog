@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # sqlalchemy
     engine_echo: bool = False
+    fetch_step: int = 1000
 
     class Config:
         env_file = ".env"
