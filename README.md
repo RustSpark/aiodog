@@ -1,7 +1,7 @@
 ## AIODOG
 ### 简介
 **aiodog是基于python3.10的异步轻便执行框架，可以让你更加方便的编写异步代码。**
-### 特点（组合异步库）
+### 特点
 - 可用于异步爬虫
     - aiohttp: https://docs.aiohttp.org/en/stable/
     - playwright: https://playwright.dev/python/docs/intro
@@ -9,13 +9,14 @@
     - aiomysql: https://aiomysql.readthedocs.io/en/latest/
     - aiopg: https://aiopg.readthedocs.io/en/latest/
     - asyncpg: https://github.com/MagicStack/asyncpg
-- 内部封装了异步sqlalchemy，可方便与fastapi等web框架组合使用
-- 可处理同步函数
-- 细分业务步骤，代码整洁
+- 内部封装了[异步SQLAlchemy](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html)，方便与[FastAPI](https://fastapi.tiangolo.com/zh/tutorial/sql-databases/)等web框架ORM进行集成
+- 内部封装处理同步函数
+- 细分业务，可以快速定位到每一步骤
+- 轻便，不需要过度配置
 ### 环境要求
 - python3.10+
 ### 安装
-**NOTE：** 确保环境中已有poetry
+**NOTE：** 确保环境中已有poetry：https://python-poetry.org/docs/
 ```shell
 pip install poetry
 ```
