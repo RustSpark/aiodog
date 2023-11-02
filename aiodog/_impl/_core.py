@@ -29,7 +29,10 @@ _T = TypeVar("_T", bound=Union[Request, Item])
 @pipable_operator
 def _logger(source: AsyncIterable) -> AsyncIterator:
     def message(value) -> None:
-        logger.info(value)
+        if hasattr(value, "msg") and (msg := value.msg):
+            logger.info(msg)
+        elif isinstance(value, str):
+            logger.info(value)
 
     return stream.action.raw(source, message)
 
@@ -55,35 +58,31 @@ class Control:
             step_number=item_save_step_number,
         )
 
-    def _execute(self):
-        @pipable_operator
-        def wrapper(source):
-            return (
-                source
+    async def _execute(self, function, *args):
+        if inspect.iscoroutinefunction(function):
+            await function(*args)
+        elif inspect.isasyncgenfunction(function):
+            await (
+                operator(function)(*args)
                 | _logger.pipe()
                 | pipe.map(
                     async_(
                         lambda v: getattr(
                             self, f"_{v.__class__.__name__.lower()}_buffer"
-                        ).start(v) # type: ignore
+                        ).start(
+                            v
+                        )  # type: ignore
                     ),
                     task_limit=self._tl,
                 )
-                | pipe.map(self._callback, task_limit=self._tl) # type: ignore
+                | pipe.map(self._callback)
             )
-
-        return wrapper
 
     async def _callback(self, source: Optional[Tuple[_T, Any]]):
         if source:
             request_or_item, response = source
             if response is not None and (callback := request_or_item.callback):
-                if inspect.iscoroutinefunction(callback):
-                    await callback(request_or_item, response)
-                elif inspect.isasyncgenfunction(callback):
-                    await (
-                        operator(callback)(request_or_item, response) | self._execute()
-                    )
+                await self._execute(callback, *source)
 
     def __call__(self, function):
         @wraps(function)
@@ -91,10 +90,7 @@ class Control:
             logger.info(f"Start execute task `{self._tn}`")
             async with self._item_buffer:
                 try:
-                    if inspect.iscoroutinefunction(function):
-                        await function(*args)
-                    elif inspect.isasyncgenfunction(function):
-                        await (operator(function)(*args) | self._execute())
+                    await self._execute(function, *args)
                 except Exception:
                     logger.error(traceback.format_exc())
 

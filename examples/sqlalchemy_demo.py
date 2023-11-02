@@ -30,7 +30,7 @@ def main():
                     )
 
             async def echo(request, response):
-                item: T1 = response
+                (item,) = response
                 logger.info(item.name)
                 for _ in range(10):
                     yield Item(
