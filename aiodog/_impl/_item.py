@@ -118,7 +118,7 @@ class ItemBuffer:
         try:
             await (
                 run()
-                | pipe.map(async_(lambda callback: callback()), task_limit=self._pl)
+                | pipe.map(async_(lambda callback: callback()), task_limit=self._pl) # type: ignore
             )
         except core.StreamEmpty:
             logger.warning("No Items Exists!")

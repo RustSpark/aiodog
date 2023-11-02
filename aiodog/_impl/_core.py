@@ -65,11 +65,11 @@ class Control:
                     async_(
                         lambda v: getattr(
                             self, f"_{v.__class__.__name__.lower()}_buffer"
-                        ).start(v)
+                        ).start(v) # type: ignore
                     ),
                     task_limit=self._tl,
                 )
-                | pipe.map(self._callback, task_limit=self._tl)
+                | pipe.map(self._callback, task_limit=self._tl) # type: ignore
             )
 
         return wrapper
