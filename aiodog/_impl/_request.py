@@ -2,6 +2,7 @@ import asyncio
 import inspect
 import random
 import traceback
+from functools import partial
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 from aiohttp import ClientSession
@@ -39,6 +40,18 @@ class Request:
     def trans(self):
         return self._trans
 
+    @property
+    def func(self):
+        return self._func
+
+    @property
+    def func_args(self):
+        return self._func_args
+
+    @property
+    def func_kwargs(self):
+        return self._func_kwargs
+
 
 class RequestBuffer:
     def __init__(
@@ -47,32 +60,27 @@ class RequestBuffer:
     ):
         self._st = sleep_time
 
-    async def start(self, request: Request) -> Optional[Tuple[Request, Any]]:
-        if not request._func:
+    async def start(self, request: Request) -> Optional[Any]:
+        if not request.func:
             return
         try:
-            function = request._func
+            function = request.func
+            wrapped_function = partial(
+                request.func, *request.func_args, **request.func_kwargs
+            )
             if inspect.ismethod(request._func):
                 function = getattr(request._func, "__func__")
                 if isinstance(
                     instance := getattr(request._func, "__self__"), ClientSession
                 ):
-                    async with request._func(
-                        *request._func_args, **request._func_kwargs
-                    ) as res:
-                        return request, res
+                    async with wrapped_function() as res:
+                        return res
             if inspect.iscoroutinefunction(function):
-                return request, await request._func(
-                    *request._func_args, **request._func_kwargs
-                )
+                return await wrapped_function()
             elif inspect.isasyncgenfunction(function):
-                return request, request._func(
-                    *request._func_args, **request._func_kwargs
-                )
+                return wrapped_function()
             else:
-                return request, await asyncio.to_thread(
-                    request._func, *request._func_args, **request._func_kwargs
-                )
+                return await asyncio.to_thread(wrapped_function)
         except Exception:
             logger.error(traceback.format_exc())
         finally:

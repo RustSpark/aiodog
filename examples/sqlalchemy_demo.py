@@ -10,6 +10,8 @@ from aiodog import MysqlPipeline, Control, Request, Item
 def main():
     async def wrap():
         async with MysqlPipeline("mysql") as pipeline:
+            # for _ in range(100):
+            #     logger.info(await pipeline.find_one(select(T1).where(T1.name == "some name 1")))
             # 新建表和新增数据
             # async with pipeline.engine.begin() as conn:
             #     await conn.run_sync(Base.metadata.drop_all)
@@ -22,7 +24,7 @@ def main():
 
             @Control(task_name="Sqlalchemy Demo")
             async def run():
-                for _ in range(10):
+                for _ in range(100):
                     yield Request(
                         function=pipeline.find_one,
                         function_args=(select(T1).where(T1.name == "some name 1"),),
@@ -32,10 +34,10 @@ def main():
             async def echo(request, response):
                 (item,) = response
                 logger.info(item.name)
-                for _ in range(10):
-                    yield Item(
-                        manager=pipeline, data={"name": "just test1"}, model_cls=T1
-                    )
+                # for _ in range(10):
+                #     yield Item(
+                #         manager=pipeline, data={"name": "just test1"}, model_cls=T1
+                #     )
 
             await run()
 

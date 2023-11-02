@@ -8,7 +8,6 @@ from typing import (
     AsyncIterator,
     AsyncIterable,
     TypeVar,
-    Any,
 )
 
 from aiostream import (
@@ -16,14 +15,13 @@ from aiostream import (
     pipe,
     pipable_operator,
     stream,
-    async_,
 )
 from loguru import logger
 
 from ._item import Item, ItemBuffer
 from ._request import Request, RequestBuffer
 
-_T = TypeVar("_T", bound=Union[Request, Item])
+_T = TypeVar("_T", Request, Item)
 
 
 @pipable_operator
@@ -66,23 +64,18 @@ class Control:
                 operator(function)(*args)
                 | _logger.pipe()
                 | pipe.map(
-                    async_(
-                        lambda v: getattr(
-                            self, f"_{v.__class__.__name__.lower()}_buffer"
-                        ).start(
-                            v
-                        )  # type: ignore
-                    ),
+                    self._callback,
                     task_limit=self._tl,
+                    ordered=False,
                 )
-                | pipe.map(self._callback)
             )
 
-    async def _callback(self, source: Optional[Tuple[_T, Any]]):
-        if source:
-            request_or_item, response = source
-            if response is not None and (callback := request_or_item.callback):
-                await self._execute(callback, *source)
+    async def _callback(self, source: Optional[_T]):
+        if hasattr(self, name := f"_{source.__class__.__name__.lower()}_buffer"):
+            if hasattr(buffer := getattr(self, name), "start"):
+                response = await buffer.start(source)
+                if response is not None and (callback := source.callback):
+                    await self._execute(callback, source, response)
 
     def __call__(self, function):
         @wraps(function)

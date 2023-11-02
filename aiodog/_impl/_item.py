@@ -118,7 +118,10 @@ class ItemBuffer:
         try:
             await (
                 run()
-                | pipe.map(async_(lambda callback: callback()), task_limit=self._pl) # type: ignore
+                | pipe.map(
+                    async_(lambda callback: callback()),
+                    task_limit=self._pl,
+                )  # type: ignore
             )
         except core.StreamEmpty:
             logger.warning("No Items Exists!")
@@ -132,7 +135,7 @@ class ItemBuffer:
         if self._task:
             await self._task
 
-    async def start(self, item: Item) -> Optional[Tuple[Item, Any]]:
+    async def start(self, item: Item) -> Optional[str]:
         await self._q.put(item)
         if item.callback:
-            return item, ""
+            return ""
