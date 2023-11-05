@@ -5,10 +5,7 @@ import traceback
 from functools import partial
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-from aiohttp import ClientSession
 from loguru import logger
-
-from ..config import settings
 
 
 class Request:
@@ -65,16 +62,21 @@ class RequestBuffer:
             return
         try:
             function = request.func
-            wrapped_function = partial(
-                request.func, *request.func_args, **request.func_kwargs
-            )
-            if inspect.ismethod(request._func):
-                function = getattr(request._func, "__func__")
-                if isinstance(
-                    instance := getattr(request._func, "__self__"), ClientSession
-                ):
-                    async with wrapped_function() as res:
-                        return res
+            if isinstance(request.func, partial):
+                function = getattr(request.func, "func")
+                wrapped_function = partial(
+                    function,
+                    *getattr(request.func, "args"),
+                    *request.func_args,
+                    **getattr(request.func, "keywords"),
+                    **request.func_kwargs,
+                )
+            else:
+                wrapped_function = partial(
+                    function, *request.func_args, **request.func_kwargs
+                )
+            if inspect.ismethod(function):
+                function = function.__func__
             if inspect.iscoroutinefunction(function):
                 return await wrapped_function()
             elif inspect.isasyncgenfunction(function):

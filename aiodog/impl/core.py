@@ -18,8 +18,8 @@ from aiostream import (
 )
 from loguru import logger
 
-from ._item import Item, ItemBuffer
-from ._request import Request, RequestBuffer
+from aiodog.impl.buffer.item import Item, ItemBuffer
+from aiodog.impl.buffer.request import Request, RequestBuffer
 
 _T = TypeVar("_T", Request, Item)
 
