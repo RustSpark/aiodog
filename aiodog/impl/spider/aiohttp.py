@@ -4,7 +4,6 @@ from typing import Any, Optional
 from aiohttp import ClientSession
 from aiohttp.hdrs import METH_ALL
 from aiohttp.typedefs import StrOrURL
-from loguru import logger
 
 from ..response.spider import AIOHttpResponse
 
