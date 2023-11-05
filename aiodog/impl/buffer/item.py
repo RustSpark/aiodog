@@ -9,7 +9,6 @@ from typing import (
     Any,
     Optional,
     Callable,
-    Tuple,
     Generator,
 )
 
