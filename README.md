@@ -62,6 +62,8 @@ def main():
           
         async def echo(request, response):
             logger.info(response)
+        
+        await run()
             
     asyncio.run(wrap())
 
@@ -106,6 +108,8 @@ def main():
         
         async def echo1(request, response):
             logger.info(response)
+            
+        await run1()
     asyncio.run(wrap())
 
 if __name__ == "__main__":
@@ -141,6 +145,8 @@ def main():
         
         async def echo2(request, response):
             logger.info(response)
+            
+        await run()
         
     asyncio.run(wrap())
 
