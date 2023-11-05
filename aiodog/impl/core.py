@@ -1,4 +1,5 @@
 import inspect
+import os
 import traceback
 from functools import wraps
 from typing import (
@@ -39,9 +40,9 @@ class Control:
     def __init__(
         self,
         task_name: str,
-        task_limit: int = 5,
+        task_limit: Optional[int] = min(32, (os.cpu_count() or 1) + 4),
         request_sleep_time: Optional[Union[Tuple, int]] = None,
-        item_pipeline_limit: int = 5,
+        item_pipeline_limit: Optional[int] = 1,
         item_queue_maxsize: int = 1000,
         item_save_step_number: int = 5000,
     ):
