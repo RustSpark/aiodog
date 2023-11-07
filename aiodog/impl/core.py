@@ -6,34 +6,20 @@ from typing import (
     Union,
     Tuple,
     Optional,
-    AsyncIterator,
-    AsyncIterable,
     TypeVar,
 )
 
 from aiostream import (
     operator,
     pipe,
-    pipable_operator,
-    stream,
 )
 from loguru import logger
 
-from aiodog.impl.buffer.item import Item, ItemBuffer
-from aiodog.impl.buffer.request import Request, RequestBuffer
+from .base import _logger
+from .buffer.item import Item, ItemBuffer
+from .buffer.request import Request, RequestBuffer
 
 _T = TypeVar("_T", Request, Item)
-
-
-@pipable_operator
-def _logger(source: AsyncIterable) -> AsyncIterator:
-    def message(value) -> None:
-        if hasattr(value, "msg") and (msg := value.msg):
-            logger.info(msg)
-        elif isinstance(value, str):
-            logger.info(value)
-
-    return stream.action.raw(source, message)
 
 
 class Control:
@@ -42,7 +28,6 @@ class Control:
         task_name: str,
         task_limit: Optional[int] = min(32, (os.cpu_count() or 1) + 4),
         request_sleep_time: Optional[Union[Tuple, int]] = None,
-        item_pipeline_limit: Optional[int] = 1,
         item_queue_maxsize: int = 1000,
         item_save_step_number: int = 5000,
     ):
@@ -52,7 +37,6 @@ class Control:
             sleep_time=request_sleep_time,
         )
         self._item_buffer = ItemBuffer(
-            pipeline_limit=item_pipeline_limit,
             queue_maxsize=item_queue_maxsize,
             step_number=item_save_step_number,
         )

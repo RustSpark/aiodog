@@ -9,19 +9,12 @@ from typing import (
     Any,
     Optional,
     Callable,
-    Generator,
 )
 
-from aiostream import (
-    stream,
-    pipe,
-    pipable_operator,
-    operator,
-    streamcontext,
-    core,
-    async_,
-)
+from aiostream import stream, pipe, pipable_operator, operator, streamcontext, core
 from loguru import logger
+
+from ..base import _logger
 
 
 class Item:
@@ -69,28 +62,28 @@ class Item:
 class ItemBuffer:
     def __init__(
         self,
-        pipeline_limit: int = 5,
         queue_maxsize: int = 1000,
         step_number: int = 5000,
     ):
-        self._pl = pipeline_limit
         self._sn = step_number
         self._q = Queue(maxsize=queue_maxsize)
         self._task = None
         self._sentinel = object()
 
     async def _generate_items(self):
-        def combine_items(items: List[Item]) -> Generator:
+        async def combine_items(items: List[Item]) -> str:
             _cache = defaultdict(partial(defaultdict, partial(defaultdict, list)))
             for item in items:
                 (_temp := _cache[item.manager][item.model_cls])["data"].append(
                     item.data
                 )
                 _temp["update_cols"] = item.update_cols
+            tasks = []
             for m, mv in _cache.items():
                 if hasattr(m, "add_batch"):
                     for t, tv in mv.items():
-                        yield partial(getattr(m, "add_batch"), t, tv)
+                        tasks.append(m.add_batch(t, tv))
+            return f"Pipeline Result: [{await asyncio.gather(*tasks, return_exceptions=True)}]"
 
         @pipable_operator
         async def work(source):
@@ -108,20 +101,12 @@ class ItemBuffer:
                 if self._sentinel is items[-1]:
                     items.pop()
                     if items:
-                        for pipeline_callback in combine_items(items):
-                            yield pipeline_callback
+                        yield items
                     break
-                for pipeline_callback in combine_items(items):
-                    yield pipeline_callback
+                yield items
 
         try:
-            await (
-                run()
-                | pipe.map(
-                    async_(lambda callback: callback()),
-                    task_limit=self._pl,
-                )  # type: ignore
-            )
+            await (run() | pipe.map(combine_items) | _logger.pipe())  # type: ignore
         except core.StreamEmpty:
             logger.warning("No Items Exists!")
 
