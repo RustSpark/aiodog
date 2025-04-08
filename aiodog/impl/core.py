@@ -120,7 +120,7 @@ class Control:
                     )
                 )
             except core.StreamEmpty:
-                pass
+                logger.error("")
 
     def __call__(self, function):
         @wraps(function)
