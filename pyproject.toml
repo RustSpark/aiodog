@@ -28,10 +28,10 @@ simple_demo = "examples.simple_demo:main"
 sqlalchemy_demo = "examples.sqlalchemy_demo:main"
 offset = "examples.sqlalchemy_offset_demo:main"
 
-[[tool.poetry.source]]
-name = "tsh"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-priority = "default"
+# [[tool.poetry.source]]
+# name = "tsh"
+# url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+# priority = "default"
 
 [build-system]
 requires = ["poetry-core"]

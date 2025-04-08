@@ -108,16 +108,19 @@ class Control:
         if inspect.iscoroutinefunction(function):
             await function(*args)
         elif inspect.isasyncgenfunction(function):
-            await (
-                operator(function)(*args)
-                | pipe.map(
-                    async_(
-                        lambda v: getattr(
-                            self, f"_{v.__class__.__name__.lower()}_buffer"
-                        ).put(v)
-                    ),
+            try:
+                await (
+                    operator(function)(*args)
+                    | pipe.map(
+                        async_(
+                            lambda v: getattr(
+                                self, f"_{v.__class__.__name__.lower()}_buffer"
+                            ).put(v)
+                        ),
+                    )
                 )
-            )
+            except core.StreamEmpty:
+                pass
 
     def __call__(self, function):
         @wraps(function)
