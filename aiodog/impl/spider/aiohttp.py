@@ -29,4 +29,5 @@ class ASpiderSession(ClientSession):
             url=url,
             **kwargs,
         ) as response:
-            return await AIOHttpResponse(response).assignment()
+            if response:
+                return await AIOHttpResponse(response).assignment()
